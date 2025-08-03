@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Tìm kiếm tương tác thuốc{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Search Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-search me-2"></i>Tìm kiếm tương tác thuốc
+                    </h4>
+                    
+                    <!-- Search Form -->
+                    <form method="get" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" 
+                                       name="q" 
+                                       class="form-control" 
+                                       placeholder="Nhập tên thuốc hoặc hoạt chất..."
+                                       value="{{ query }}">
+                            </div>
+                            <div class="col-md-2">
+                                <select name="severity" class="form-select">
+                                    <option value="">Tất cả mức độ</option>
+                                    {% for value, label in severity_choices %}
+                                    <option value="{{ value }}" {% if severity == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-1"></i>Tìm
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    {% if query %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Kết quả tìm kiếm cho: <strong>"{{ query }}"</strong>
+                        {% if severity %}
+                        với mức độ: <strong>"{{ severity }}"</strong>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="row">
+        <div class="col-12">
+            {% if interactions %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Kết quả tìm kiếm ({{ interactions|length }} tương tác)
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Thuốc 1</th>
+                                    <th>Thuốc 2</th>
+                                    <th>Cơ chế</th>
+                                    <th>Hậu quả</th>
+                                    <th>Mức độ</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for interaction in interactions %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ interaction.drug1.ten_thuoc }}</strong>
+                                        {% if interaction.drug1.hoat_chat %}
+                                        <br><small class="text-muted">{{ interaction.drug1.hoat_chat|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ interaction.drug2.ten_thuoc }}</strong>
+                                        {% if interaction.drug2.hoat_chat %}
+                                        <br><small class="text-muted">{{ interaction.drug2.hoat_chat|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ interaction.mechanism|truncatechars:100 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ interaction.consequence|truncatechars:100 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ interaction.get_severity_color }} severity-badge">
+                                            {{ interaction.get_severity_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'drugs:interaction_detail' interaction.id %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Không tìm thấy kết quả</h4>
+                <p class="text-muted">
+                    {% if query %}
+                    Không tìm thấy tương tác nào cho "{{ query }}".
+                    {% else %}
+                    Vui lòng nhập từ khóa tìm kiếm.
+                    {% endif %}
+                </p>
+                <a href="{% url 'drugs:home' %}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Về trang chủ
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search Tips -->
+    {% if query %}
+    <div class="row mt-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Gợi ý tìm kiếm</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Tìm kiếm theo tên thuốc:</h6>
+                            <ul class="list-unstyled">
+                                <li><code>itraconazol dabigatran</code></li>
+                                <li><code>dabigatran itraconazol</code></li>
+                                <li><code>itra dabi</code></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Tìm kiếm theo cơ chế:</h6>
+                            <ul class="list-unstyled">
+                                <li><code>hiệp đồng</code></li>
+                                <li><code>CYP3A4</code></li>
+                                <li><code>ức chế</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Tìm kiếm theo hậu quả:</h6>
+                            <ul class="list-unstyled">
+                                <li><code>xuất huyết</code></li>
+                                <li><code>serotonin</code></li>
+                                <li><code>tăng huyết áp</code></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Lọc theo mức độ:</h6>
+                            <ul class="list-unstyled">
+                                <li><span class="badge bg-danger">Chống chỉ định</span></li>
+                                <li><span class="badge bg-warning">Nghiêm trọng</span></li>
+                                <li><span class="badge bg-info">Trung bình</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

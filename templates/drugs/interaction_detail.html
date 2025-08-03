@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết tương tác - {{ interaction.drug1.ten_thuoc }} & {{ interaction.drug2.ten_thuoc }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'drugs:home' %}">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'drugs:search' %}">Tìm kiếm</a></li>
+                    <li class="breadcrumb-item active">Chi tiết tương tác</li>
+                </ol>
+            </nav>
+
+            <!-- Interaction Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Tương tác thuốc
+                        </h4>
+                        <span class="badge bg-{{ interaction.get_severity_color }} fs-6">
+                            {{ interaction.get_severity_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">{{ interaction.drug1.ten_thuoc }}</h5>
+                            {% if interaction.drug1.hoat_chat %}
+                            <p class="text-muted mb-2">
+                                <strong>Hoạt chất:</strong> {{ interaction.drug1.hoat_chat }}
+                            </p>
+                            {% endif %}
+                            {% if interaction.drug1.phan_loai %}
+                            <p class="text-muted mb-2">
+                                <strong>Phân loại:</strong> {{ interaction.drug1.phan_loai }}
+                            </p>
+                            {% endif %}
+                            {% if interaction.drug1.nhom_thuoc %}
+                            <p class="text-muted mb-2">
+                                <strong>Nhóm thuốc:</strong> {{ interaction.drug1.nhom_thuoc }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary">{{ interaction.drug2.ten_thuoc }}</h5>
+                            {% if interaction.drug2.hoat_chat %}
+                            <p class="text-muted mb-2">
+                                <strong>Hoạt chất:</strong> {{ interaction.drug2.hoat_chat }}
+                            </p>
+                            {% endif %}
+                            {% if interaction.drug2.phan_loai %}
+                            <p class="text-muted mb-2">
+                                <strong>Phân loại:</strong> {{ interaction.drug2.phan_loai }}
+                            </p>
+                            {% endif %}
+                            {% if interaction.drug2.nhom_thuoc %}
+                            <p class="text-muted mb-2">
+                                <strong>Nhóm thuốc:</strong> {{ interaction.drug2.nhom_thuoc }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interaction Details -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>Cơ chế tương tác
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ interaction.mechanism }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exclamation-circle me-2"></i>Hậu quả
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ interaction.consequence }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Management -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-stethoscope me-2"></i>Xử trí
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ interaction.management }}</p>
+                </div>
+            </div>
+
+            <!-- Drug Information -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-pills me-2"></i>Thông tin thuốc 1
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ID:</strong></td>
+                                    <td>{{ interaction.drug1.id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tên thuốc:</strong></td>
+                                    <td>{{ interaction.drug1.ten_thuoc }}</td>
+                                </tr>
+                                {% if interaction.drug1.hoat_chat %}
+                                <tr>
+                                    <td><strong>Hoạt chất:</strong></td>
+                                    <td>{{ interaction.drug1.hoat_chat }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if interaction.drug1.phan_loai %}
+                                <tr>
+                                    <td><strong>Phân loại:</strong></td>
+                                    <td>{{ interaction.drug1.phan_loai }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if interaction.drug1.nhom_thuoc %}
+                                <tr>
+                                    <td><strong>Nhóm thuốc:</strong></td>
+                                    <td>{{ interaction.drug1.nhom_thuoc }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if interaction.drug1.nuoc_dk %}
+                                <tr>
+                                    <td><strong>Nước đăng ký:</strong></td>
+                                    <td>{{ interaction.drug1.nuoc_dk }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-pills me-2"></i>Thông tin thuốc 2
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ID:</strong></td>
+                                    <td>{{ interaction.drug2.id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tên thuốc:</strong></td>
+                                    <td>{{ interaction.drug2.ten_thuoc }}</td>
+                                </tr>
+                                {% if interaction.drug2.hoat_chat %}
+                                <tr>
+                                    <td><strong>Hoạt chất:</strong></td>
+                                    <td>{{ interaction.drug2.hoat_chat }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if interaction.drug2.phan_loai %}
+                                <tr>
+                                    <td><strong>Phân loại:</strong></td>
+                                    <td>{{ interaction.drug2.phan_loai }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if interaction.drug2.nhom_thuoc %}
+                                <tr>
+                                    <td><strong>Nhóm thuốc:</strong></td>
+                                    <td>{{ interaction.drug2.nhom_thuoc }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if interaction.drug2.nuoc_dk %}
+                                <tr>
+                                    <td><strong>Nước đăng ký:</strong></td>
+                                    <td>{{ interaction.drug2.nuoc_dk }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mb-4">
+                <a href="{% url 'drugs:search' %}" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại tìm kiếm
+                </a>
+                <a href="{% url 'drugs:home' %}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Về trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
