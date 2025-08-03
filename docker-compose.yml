@@ -7,14 +7,20 @@ services:
       - "8001:8001"
     environment:
       - DEBUG=False
-      - SECRET_KEY=your-secret-key-change-in-production
-      - ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com
+      - SECRET_KEY=django-insecure-change-this-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DATABASE_URL=postgres://drug_user:drug_password@db:5432/drug_interaction
+      - DJANGO_SETTINGS_MODULE=drug_interaction.settings
     volumes:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
     depends_on:
       - db
     restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+              python manage.py load_sample_data &&
+              gunicorn --bind 0.0.0.0:8001 --workers 3 drug_interaction.wsgi:application"
 
   db:
     image: postgres:15
@@ -25,6 +31,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    ports:
+      - "5432:5432"
 
 volumes:
   postgres_data: 
