@@ -9,30 +9,13 @@ services:
       - DEBUG=False
       - SECRET_KEY=django-insecure-change-this-in-production
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-      - DATABASE_URL=postgres://drug_user:drug_password@db:5432/drug_interaction
       - DJANGO_SETTINGS_MODULE=drug_interaction.settings
     volumes:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
-    depends_on:
-      - db
+      - ./db.sqlite3:/app/db.sqlite3
     restart: unless-stopped
     command: >
       sh -c "python manage.py migrate &&
               python manage.py load_sample_data &&
-              gunicorn --bind 0.0.0.0:8001 --workers 3 drug_interaction.wsgi:application"
-
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=drug_interaction
-      - POSTGRES_USER=drug_user
-      - POSTGRES_PASSWORD=drug_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-
-volumes:
-  postgres_data: 
+              gunicorn --bind 0.0.0.0:8001 --workers 3 drug_interaction.wsgi:application" 

@@ -99,7 +99,7 @@ python manage.py runserver 8001
 ## 🐳 Docker Support
 
 ### Production Ready
-- **Multi-container setup**: Web app + PostgreSQL database
+- **Single container setup**: Web app with SQLite database
 - **Environment variables**: Configurable settings
 - **Health checks**: Application monitoring
 - **Volume persistence**: Data persistence across restarts
@@ -172,7 +172,6 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed VPS deployment instructions.
 DEBUG=False
 SECRET_KEY=your-secret-key
 ALLOWED_HOSTS=your-domain.com
-DATABASE_URL=postgres://user:password@host:port/db
 ```
 
 ## 📊 Sample Data
@@ -196,16 +195,26 @@ The application comes pre-loaded with:
 
 ### Common Issues
 1. **Port already in use**: Change port in docker-compose.yml
-2. **Database connection**: Check PostgreSQL container status
+2. **Database file**: Check if db.sqlite3 exists and has proper permissions
 3. **Static files**: Run `python manage.py collectstatic`
 
 ### Logs
 ```bash
 # View application logs
 docker-compose logs -f web
+```
 
-# View database logs
-docker-compose logs -f db
+### Database Management
+```bash
+# Backup database
+cp db.sqlite3 backup.sqlite3
+
+# Restore database
+cp backup.sqlite3 db.sqlite3
+
+# Reset database (will lose all data)
+rm db.sqlite3
+docker-compose up --build -d
 ```
 
 ## 📚 Documentation
