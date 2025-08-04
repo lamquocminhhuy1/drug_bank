@@ -1,108 +1,150 @@
 #!/bin/bash
 
 # Drug Interaction Tracker - VPS Deployment Script
-echo "🚀 Deploying Drug Interaction Tracker on VPS..."
+# This script will install Docker, clone the repository, and deploy the application
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "❌ Please run as root (use sudo)"
-    exit 1
+set -e  # Exit on any error
+
+echo "🚀 Starting Drug Interaction Tracker VPS Deployment..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if running as root or with sudo
+if [[ $EUID -eq 0 ]]; then
+    print_warning "Running as root. This is not recommended for security reasons."
 fi
 
 # Update system
-echo "📦 Updating system packages..."
-apt update && apt upgrade -y
+print_status "Updating system packages..."
+sudo apt update && sudo apt upgrade -y
 
-# Install Docker if not installed
+# Install required packages
+print_status "Installing required packages..."
+sudo apt install -y curl wget git ufw
+
+# Install Docker
+print_status "Installing Docker..."
 if ! command -v docker &> /dev/null; then
-    echo "🐳 Installing Docker..."
     curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    usermod -aG docker $USER
-    systemctl enable docker
-    systemctl start docker
+    sudo sh get-docker.sh
+    sudo usermod -aG docker $USER
+    print_success "Docker installed successfully"
+else
+    print_success "Docker is already installed"
 fi
 
-# Install Docker Compose if not installed
+# Install Docker Compose
+print_status "Installing Docker Compose..."
 if ! command -v docker-compose &> /dev/null; then
-    echo "🐳 Installing Docker Compose..."
-    curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    print_success "Docker Compose installed successfully"
+else
+    print_success "Docker Compose is already installed"
 fi
 
-# Install UFW if not installed
-if ! command -v ufw &> /dev/null; then
-    echo "🔥 Installing UFW firewall..."
-    apt install ufw -y
-fi
-
-# Setup firewall
-echo "🔥 Setting up firewall..."
-ufw --force reset
-ufw enable
-ufw allow ssh
-ufw allow 22
-ufw allow 8001
-ufw allow 80
-ufw allow 443
+# Start Docker service
+print_status "Starting Docker service..."
+sudo systemctl start docker
+sudo systemctl enable docker
 
 # Clone repository
-echo "📥 Cloning repository..."
-cd /opt
-git clone https://github.com/lamquocminhhuy1/drug_bank.git
-cd drug_bank
+print_status "Cloning repository..."
+if [ -d "drug_bank" ]; then
+    print_warning "Repository already exists. Updating..."
+    cd drug_bank
+    git pull
+else
+    git clone https://github.com/lamquocminhhuy1/drug_bank.git
+    cd drug_bank
+fi
 
 # Create necessary directories
-echo "📁 Creating directories..."
-mkdir -p media staticfiles
+print_status "Creating directories and setting permissions..."
+mkdir -p static staticfiles media
+chmod 755 static staticfiles media
 
-# Set proper permissions
-echo "🔐 Setting permissions..."
-chmod +x setup.sh
-chmod +x deploy_vps.sh
+# Create database file with proper permissions
+touch db.sqlite3
+chmod 644 db.sqlite3
+
+# Create static files structure
+mkdir -p static/css static/js static/images
+chmod -R 755 static
 
 # Build and start application
-echo "🐳 Building and starting application..."
+print_status "Building and starting the application..."
 docker-compose up --build -d
 
 # Wait for application to be ready
-echo "⏳ Waiting for application to be ready..."
+print_status "Waiting for application to start..."
 sleep 30
 
-# Get server IP
-SERVER_IP=$(curl -s ifconfig.me)
+# Configure firewall
+print_status "Configuring firewall..."
+sudo ufw --force reset
+sudo ufw allow ssh
+sudo ufw allow 8001
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw --force enable
+
+# Get VPS IP address
+VPS_IP=$(curl -s ifconfig.me)
 
 # Check if application is running
-echo "🔍 Checking application status..."
+print_status "Checking application status..."
 if curl -f http://localhost:8001/ > /dev/null 2>&1; then
-    echo "✅ Application is running successfully!"
+    print_success "Application is running successfully!"
     echo ""
     echo "🎉 Deployment completed successfully!"
     echo ""
     echo "📱 Access your application:"
-    echo "   🌐 Web Interface: http://$SERVER_IP:8001/"
-    echo "   📚 API Documentation: http://$SERVER_IP:8001/api/swagger/"
-    echo "   🛠️  Admin Panel: http://$SERVER_IP:8001/admin/"
-    echo "   🔌 API Root: http://$SERVER_IP:8001/api/"
+    echo "   🌐 Web Interface: http://$VPS_IP:8001/"
+    echo "   📚 API Documentation: http://$VPS_IP:8001/api/swagger/"
+    echo "   🛠️  Admin Panel: http://$VPS_IP:8001/admin/"
+    echo "   🔌 API Root: http://$VPS_IP:8001/api/"
     echo ""
     echo "👤 Admin credentials:"
     echo "   Username: admin"
     echo "   Password: admin123456"
     echo ""
-    echo "💾 Database: SQLite (db.sqlite3 file)"
+    echo "🔧 Management commands:"
+    echo "   View logs: docker-compose logs -f"
+    echo "   Stop app: docker-compose down"
+    echo "   Restart: docker-compose up -d"
+    echo "   Update: git pull && docker-compose up --build -d"
     echo ""
-    echo "🔧 Useful commands:"
-    echo "   - View logs: docker-compose logs -f"
-    echo "   - Stop app: docker-compose down"
-    echo "   - Restart app: docker-compose up -d"
-    echo "   - Check firewall: ufw status"
+    echo "🔒 Firewall status:"
+    sudo ufw status
     echo ""
-    echo "💡 Tips:"
-    echo "   - Backup database: cp db.sqlite3 backup.sqlite3"
-    echo "   - Restore database: cp backup.sqlite3 db.sqlite3"
-    echo "   - Update app: git pull && docker-compose up --build -d"
+    print_success "Your Drug Interaction Tracker is now live!"
 else
-    echo "❌ Application failed to start. Check the logs:"
-    echo "   docker-compose logs -f"
+    print_error "Application failed to start. Checking logs..."
+    docker-compose logs --tail=20
+    echo ""
+    print_error "Deployment failed. Please check the logs above."
     exit 1
 fi 

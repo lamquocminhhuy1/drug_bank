@@ -1,25 +1,304 @@
-# VPS Deployment Guide - Drug Interaction Tracker
+# VPS Deployment Guide
 
-## 🚀 **One-Command Deployment (Recommended)**
+Complete guide to deploy the Drug Interaction Tracker on your VPS.
 
-### **Bước 1: SSH vào VPS**
+## 🚀 **Quick Deploy (One Command)**
+
+### Prerequisites
+- Ubuntu/Debian VPS
+- SSH access to your VPS
+- Root or sudo access
+
+### One-Command Deployment
 ```bash
-ssh root@YOUR_VPS_IP
+# Run this on your VPS
+curl -sSL https://raw.githubusercontent.com/lamquocminhhuy1/drug_bank/main/deploy_vps.sh | bash
 ```
 
-### **Bước 2: Download và chạy deployment script**
-```bash
-# Download script
-wget https://raw.githubusercontent.com/lamquocminhhuy1/drug_bank/main/deploy_vps.sh
+## 🛠️ **Manual Deployment**
 
-# Chạy script với quyền root
-sudo bash deploy_vps.sh
+### Step 1: Update System
+```bash
+sudo apt update && sudo apt upgrade -y
 ```
 
-## 🔧 **Manual Deployment**
-
-### **Bước 1: Cài đặt Docker**
+### Step 2: Install Docker
 ```bash
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Logout and login again, or run:
+newgrp docker
+```
+
+### Step 3: Clone Repository
+```bash
+# Clone the repository
+git clone https://github.com/lamquocminhhuy1/drug_bank.git
+cd drug_bank
+```
+
+### Step 4: Create Directories and Set Permissions
+```bash
+# Create necessary directories
+mkdir -p static staticfiles media
+
+# Set proper permissions
+chmod 755 static staticfiles media
+
+# Create database file with proper permissions
+touch db.sqlite3
+chmod 644 db.sqlite3
+
+# Create static files structure
+mkdir -p static/css static/js static/images
+chmod -R 755 static
+```
+
+### Step 5: Build and Run Application
+```bash
+# Build and start the application
+docker-compose up --build -d
+
+# Wait for the application to be ready
+sleep 30
+
+# Check if the application is running
+curl -f http://localhost:8001/ > /dev/null 2>&1 && echo "✅ Application is running!" || echo "❌ Application failed to start"
+```
+
+### Step 6: Configure Firewall
+```bash
+# Install UFW if not installed
+sudo apt install ufw -y
+
+# Allow SSH
+sudo ufw allow ssh
+
+# Allow web application port
+sudo ufw allow 8001
+
+# Allow HTTP and HTTPS (optional)
+sudo ufw allow 80
+sudo ufw allow 443
+
+# Enable firewall
+sudo ufw enable
+
+# Check firewall status
+sudo ufw status
+```
+
+## 🌐 **Access Your Application**
+
+### Local Access
+- **Web Interface**: http://localhost:8001/
+- **API Documentation**: http://localhost:8001/api/swagger/
+- **Admin Panel**: http://localhost:8001/admin/
+- **API Root**: http://localhost:8001/api/
+
+### External Access
+Replace `YOUR_VPS_IP` with your actual VPS IP address:
+- **Web Interface**: http://YOUR_VPS_IP:8001/
+- **API Documentation**: http://YOUR_VPS_IP:8001/api/swagger/
+- **Admin Panel**: http://YOUR_VPS_IP:8001/admin/
+- **API Root**: http://YOUR_VPS_IP:8001/api/
+
+### Admin Credentials
+- **Username**: admin
+- **Password**: admin123456
+
+## 🔧 **Management Commands**
+
+### View Logs
+```bash
+# View all logs
+docker-compose logs -f
+
+# View only web service logs
+docker-compose logs -f web
+```
+
+### Stop Application
+```bash
+docker-compose down
+```
+
+### Restart Application
+```bash
+docker-compose up -d
+```
+
+### Rebuild and Restart
+```bash
+docker-compose up --build -d
+```
+
+### Update Application
+```bash
+# Pull latest changes
+git pull
+
+# Rebuild and restart
+docker-compose up --build -d
+```
+
+## 🗄️ **Database Management**
+
+### Backup Database
+```bash
+cp db.sqlite3 backup_$(date +%Y%m%d_%H%M%S).sqlite3
+```
+
+### Restore Database
+```bash
+cp backup.sqlite3 db.sqlite3
+docker-compose restart
+```
+
+### Reset Database
+```bash
+rm db.sqlite3
+docker-compose up --build -d
+```
+
+## 🔍 **Troubleshooting**
+
+### Check Application Status
+```bash
+# Check if container is running
+docker-compose ps
+
+# Check container logs
+docker-compose logs web
+
+# Check if port is listening
+netstat -tlnp | grep 8001
+```
+
+### Fix Common Issues
+
+#### Permission Issues
+```bash
+# Fix permissions for database and static files
+sudo chown -R 1000:1000 db.sqlite3 static staticfiles media
+sudo chmod 644 db.sqlite3
+sudo chmod -R 755 static staticfiles media
+```
+
+#### Port Already in Use
+```bash
+# Check what's using port 8001
+sudo lsof -i :8001
+
+# Kill process if needed
+sudo kill -9 <PID>
+```
+
+#### Docker Issues
+```bash
+# Restart Docker service
+sudo systemctl restart docker
+
+# Clean up Docker
+docker system prune -f
+```
+
+### Quick Fix Script
+```bash
+# Run the quick fix script
+./fix_vps_issues.sh
+```
+
+## 📊 **Monitoring**
+
+### Check Resource Usage
+```bash
+# Check Docker resource usage
+docker stats
+
+# Check disk usage
+df -h
+
+# Check memory usage
+free -h
+```
+
+### Health Check
+```bash
+# Test application health
+curl -f http://localhost:8001/api/stats/ && echo "✅ Application is healthy" || echo "❌ Application has issues"
+```
+
+## 🔒 **Security Considerations**
+
+### Change Default Password
+```bash
+# Access Django shell
+docker-compose exec web python manage.py shell
+
+# Change admin password
+from django.contrib.auth.models import User
+user = User.objects.get(username='admin')
+user.set_password('your-new-password')
+user.save()
+exit()
+```
+
+### Environment Variables
+Create a `.env` file for production:
+```bash
+# Create .env file
+cat > .env << EOF
+DEBUG=False
+SECRET_KEY=your-secure-secret-key-here
+ALLOWED_HOSTS=your-vps-ip,your-domain.com
+EOF
+```
+
+### SSL/HTTPS Setup (Optional)
+```bash
+# Install Nginx
+sudo apt install nginx -y
+
+# Configure Nginx as reverse proxy
+sudo nano /etc/nginx/sites-available/drug-interaction
+
+# Add configuration:
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:8001;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+}
+
+# Enable site
+sudo ln -s /etc/nginx/sites-available/drug-interaction /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+## 📝 **Complete Deployment Script**
+
+Save this as `deploy_complete.sh`:
+
+```bash
+#!/bin/bash
+
+echo "🚀 Deploying Drug Interaction Tracker..."
+
 # Update system
 sudo apt update && sudo apt upgrade -y
 
@@ -27,249 +306,57 @@ sudo apt update && sudo apt upgrade -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
-sudo systemctl enable docker
-sudo systemctl start docker
 
 # Install Docker Compose
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
-```
 
-### **Bước 2: Cấu hình Firewall**
-```bash
-# Install UFW
-sudo apt install ufw -y
-
-# Setup firewall
-sudo ufw --force reset
-sudo ufw enable
-sudo ufw allow ssh
-sudo ufw allow 22
-sudo ufw allow 8001
-sudo ufw allow 80
-sudo ufw allow 443
-
-# Check status
-sudo ufw status verbose
-```
-
-### **Bước 3: Deploy Application**
-```bash
 # Clone repository
-cd /opt
-sudo git clone https://github.com/lamquocminhhuy1/drug_bank.git
+git clone https://github.com/lamquocminhhuy1/drug_bank.git
 cd drug_bank
 
-# Create directories
-sudo mkdir -p media staticfiles
+# Create directories and set permissions
+mkdir -p static staticfiles media
+chmod 755 static staticfiles media
+touch db.sqlite3
+chmod 644 db.sqlite3
+mkdir -p static/css static/js static/images
+chmod -R 755 static
 
-# Build and start
-sudo docker-compose up --build -d
+# Build and start application
+docker-compose up --build -d
 
-# Check status
-sudo docker-compose ps
-```
+# Wait for application
+sleep 30
 
-## 📱 **Access Application**
-
-### **Get VPS IP Address**
-```bash
-# Method 1: Using curl
-curl -s ifconfig.me
-
-# Method 2: Using hostname
-hostname -I
-
-# Method 3: Using ip command
-ip addr show
-```
-
-### **Access URLs**
-- **Web Interface**: `http://YOUR_VPS_IP:8001/`
-- **API Documentation**: `http://YOUR_VPS_IP:8001/api/swagger/`
-- **Admin Panel**: `http://YOUR_VPS_IP:8001/admin/`
-- **API Root**: `http://YOUR_VPS_IP:8001/api/`
-
-### **Admin Credentials**
-- **Username**: `admin`
-- **Password**: `admin123456`
-
-## 🔧 **Management Commands**
-
-### **Application Management**
-```bash
-# View logs
-sudo docker-compose logs -f
-
-# Stop application
-sudo docker-compose down
-
-# Restart application
-sudo docker-compose up -d
-
-# Rebuild and restart
-sudo docker-compose up --build -d
-
-# Check status
-sudo docker-compose ps
-```
-
-### **Database Management**
-```bash
-# Backup database
-sudo cp db.sqlite3 backup.sqlite3
-
-# Restore database
-sudo cp backup.sqlite3 db.sqlite3
-
-# Reset database (will lose all data)
-sudo rm db.sqlite3
-sudo docker-compose up --build -d
-```
-
-### **Firewall Management**
-```bash
-# Check firewall status
-sudo ufw status
-
-# Allow specific port
-sudo ufw allow PORT_NUMBER
-
-# Deny specific port
-sudo ufw deny PORT_NUMBER
-
-# Disable firewall (not recommended)
-sudo ufw disable
-```
-
-## 🔍 **Troubleshooting**
-
-### **Port 8001 not accessible**
-```bash
-# Check if port is open
-sudo netstat -tlnp | grep 8001
-
-# Check firewall
-sudo ufw status
-
-# Allow port manually
+# Configure firewall
+sudo apt install ufw -y
+sudo ufw allow ssh
 sudo ufw allow 8001
+sudo ufw --force enable
+
+# Check status
+if curl -f http://localhost:8001/ > /dev/null 2>&1; then
+    echo "✅ Deployment successful!"
+    echo "🌐 Access your application at: http://$(curl -s ifconfig.me):8001/"
+    echo "👤 Admin: admin / admin123456"
+else
+    echo "❌ Deployment failed. Check logs: docker-compose logs -f"
+fi
 ```
 
-### **Application not starting**
+Make it executable and run:
 ```bash
-# Check logs
-sudo docker-compose logs -f
-
-# Check container status
-sudo docker-compose ps
-
-# Restart containers
-sudo docker-compose restart
+chmod +x deploy_complete.sh
+./deploy_complete.sh
 ```
 
-### **Database issues**
-```bash
-# Check database file
-ls -la db.sqlite3
+## 🎉 **Success!**
 
-# Fix permissions
-sudo chown 1000:1000 db.sqlite3
-sudo chmod 644 db.sqlite3
-```
+Your Drug Interaction Tracker is now running on your VPS!
 
-### **Docker issues**
-```bash
-# Restart Docker service
-sudo systemctl restart docker
+- **Web Interface**: http://YOUR_VPS_IP:8001/
+- **API Documentation**: http://YOUR_VPS_IP:8001/api/swagger/
+- **Admin Panel**: http://YOUR_VPS_IP:8001/admin/
 
-# Check Docker status
-sudo systemctl status docker
-
-# Clean up Docker
-sudo docker system prune -a
-```
-
-## 🔒 **Security Recommendations**
-
-### **1. Change Default Admin Password**
-```bash
-# Access admin panel
-# Go to: http://YOUR_VPS_IP:8001/admin/
-# Login with: admin/admin123456
-# Change password in User Management
-```
-
-### **2. Use HTTPS (Optional)**
-```bash
-# Install Certbot
-sudo apt install certbot -y
-
-# Get SSL certificate
-sudo certbot certonly --standalone -d your-domain.com
-```
-
-### **3. Regular Backups**
-```bash
-# Create backup script
-cat > /opt/backup.sh << 'EOF'
-#!/bin/bash
-cd /opt/drug_bank
-cp db.sqlite3 backup_$(date +%Y%m%d_%H%M%S).sqlite3
-echo "Backup created: backup_$(date +%Y%m%d_%H%M%S).sqlite3"
-EOF
-
-chmod +x /opt/backup.sh
-
-# Add to crontab (daily backup at 2 AM)
-echo "0 2 * * * /opt/backup.sh" | sudo crontab -
-```
-
-## 📊 **Monitoring**
-
-### **Check Application Health**
-```bash
-# Test web interface
-curl -I http://localhost:8001/
-
-# Test API
-curl -I http://localhost:8001/api/
-
-# Check database
-sudo docker-compose exec web python manage.py dbshell
-```
-
-### **System Resources**
-```bash
-# Check disk usage
-df -h
-
-# Check memory usage
-free -h
-
-# Check CPU usage
-top
-
-# Check Docker resources
-sudo docker stats
-```
-
-## 🎉 **Success Indicators**
-
-✅ **Application running**: `http://YOUR_VPS_IP:8001/` loads successfully
-✅ **API working**: `http://YOUR_VPS_IP:8001/api/` returns JSON
-✅ **Admin accessible**: `http://YOUR_VPS_IP:8001/admin/` shows login page
-✅ **Firewall active**: `sudo ufw status` shows enabled
-✅ **Docker running**: `sudo docker-compose ps` shows containers up
-
-## 📞 **Support**
-
-If you encounter issues:
-1. Check logs: `sudo docker-compose logs -f`
-2. Check firewall: `sudo ufw status`
-3. Check Docker: `sudo docker ps`
-4. Restart application: `sudo docker-compose restart`
-
----
-
-**Drug Interaction Tracker** - Deployed successfully on VPS! 🚀 
+**Admin Login**: admin / admin123456 
