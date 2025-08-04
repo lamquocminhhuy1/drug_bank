@@ -2,36 +2,23 @@
 
 A comprehensive Django web application for tracking drug-drug interactions with modern UI, REST API, and professional admin interface.
 
-## 🚀 Quick Start (Docker)
+## 🚀 **Quick Start (One Command)**
 
 ### Prerequisites
 - Docker
 - Docker Compose
 
-### One-Command Setup
+### Run Application
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/lamquocminhhuy1/drug_bank.git
 cd drug_bank
 
-# Run the application (everything will be set up automatically)
-./setup.sh
+# Run application (everything will be set up automatically)
+./run.sh
 ```
 
-Or manually:
-```bash
-# Clone and setup
-git clone https://github.com/lamquocminhhuy1/drug_bank.git
-cd drug_bank
-
-# Create necessary directories
-mkdir -p media staticfiles
-
-# Start the application
-docker-compose up --build -d
-```
-
-### Access the Application
+### Access Application
 - **Web Interface**: http://localhost:8001/
 - **API Documentation**: http://localhost:8001/api/swagger/
 - **Admin Panel**: http://localhost:8001/admin/
@@ -41,34 +28,29 @@ docker-compose up --build -d
 - **Username**: admin
 - **Password**: admin123456
 
-## 🛠️ Local Development
+## 🛠️ **Manual Setup**
 
-### Prerequisites
-- Python 3.9+
-- pip
-
-### Setup
+### Step 1: Clone Repository
 ```bash
-# Clone the repository
 git clone https://github.com/lamquocminhhuy1/drug_bank.git
 cd drug_bank
+```
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+### Step 2: Create Directories
+```bash
+mkdir -p static staticfiles media
+```
 
-# Install dependencies
-pip install -r requirements.txt
+### Step 3: Set Permissions
+```bash
+chmod 755 static staticfiles media
+touch db.sqlite3
+chmod 644 db.sqlite3
+```
 
-# Setup database
-python manage.py makemigrations
-python manage.py migrate
-
-# Load sample data
-python manage.py load_sample_data
-
-# Run the application
-python manage.py runserver 8001
+### Step 4: Run Application
+```bash
+docker-compose up --build -d
 ```
 
 ## 🎯 Features
@@ -165,7 +147,7 @@ docker-compose up --build -d
 ## 🚀 Deployment
 
 ### VPS Deployment
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed VPS deployment instructions.
+See [VPS_DEPLOYMENT.md](VPS_DEPLOYMENT.md) for detailed VPS deployment instructions.
 
 ### Environment Variables
 ```bash
@@ -222,7 +204,8 @@ docker-compose up --build -d
 - [Project Summary](PROJECT_SUMMARY.md) - Complete project overview
 - [Swagger Setup](SWAGGER_SETUP.md) - API documentation setup
 - [Django Unfold Setup](DJANGO_UNFOLD_SETUP.md) - Admin interface setup
-- [Deployment Guide](DEPLOYMENT.md) - VPS deployment instructions
+- [VPS Deployment Guide](VPS_DEPLOYMENT.md) - VPS deployment instructions
+- [Quick Fix Commands](QUICK_FIX_COMMANDS.md) - Troubleshooting commands
 
 ## 🤝 Contributing
 
