@@ -6,7 +6,7 @@ services:
     environment:
       - DEBUG=True
       - SECRET_KEY=django-insecure-change-this-in-production
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - ALLOWED_HOSTS=*
       - DJANGO_SETTINGS_MODULE=drug_interaction.settings
     volumes:
       - ./media:/app/media
