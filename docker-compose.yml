@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   web:
     build: .
     ports:
       - "8001:8001"
     environment:
-      - DEBUG=False
+      - DEBUG=True
       - SECRET_KEY=django-insecure-change-this-in-production
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
       - DJANGO_SETTINGS_MODULE=drug_interaction.settings

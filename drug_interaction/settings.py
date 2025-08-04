@@ -168,4 +168,4 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # WhiteNoise settings for static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage' 
