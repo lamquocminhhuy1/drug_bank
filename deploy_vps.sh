@@ -81,18 +81,24 @@ else
     cd drug_bank
 fi
 
-# Create necessary directories
+# Create necessary directories with proper permissions
 print_status "Creating directories and setting permissions..."
 mkdir -p static staticfiles media
-chmod 755 static staticfiles media
+mkdir -p static/css static/js static/images
+
+# Set proper ownership and permissions
+sudo chown -R 1000:1000 static staticfiles media 2>/dev/null || true
+sudo chmod -R 755 static staticfiles media
 
 # Create database file with proper permissions
 touch db.sqlite3
-chmod 644 db.sqlite3
+sudo chown 1000:1000 db.sqlite3 2>/dev/null || true
+sudo chmod 644 db.sqlite3
 
-# Create static files structure
-mkdir -p static/css static/js static/images
-chmod -R 755 static
+# Clean up any existing containers
+print_status "Cleaning up existing containers..."
+docker-compose down 2>/dev/null || true
+docker system prune -f 2>/dev/null || true
 
 # Build and start application
 print_status "Building and starting the application..."
@@ -136,6 +142,7 @@ if curl -f http://localhost:8001/ > /dev/null 2>&1; then
     echo "   Stop app: docker-compose down"
     echo "   Restart: docker-compose up -d"
     echo "   Update: git pull && docker-compose up --build -d"
+    echo "   Fix issues: ./fix_vps_issues.sh"
     echo ""
     echo "🔒 Firewall status:"
     sudo ufw status
@@ -146,5 +153,7 @@ else
     docker-compose logs --tail=20
     echo ""
     print_error "Deployment failed. Please check the logs above."
+    echo ""
+    print_status "Try running the fix script: ./fix_vps_issues.sh"
     exit 1
 fi 

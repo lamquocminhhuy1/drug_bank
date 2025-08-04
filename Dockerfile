@@ -6,15 +6,15 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=drug_interaction.settings
 
-# Set work directory
-WORKDIR /app
-
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         gcc \
         postgresql-client \
     && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
@@ -26,20 +26,20 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p /app/staticfiles /app/static /app/media
 
-# Create a non-root user
+# Create non-root user
 RUN adduser --disabled-password --gecos '' appuser
 
-# Set proper permissions
+# Set ownership for application files (excluding mounted volumes)
 RUN chown -R appuser:appuser /app
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
 
 # Switch to non-root user
 USER appuser
 
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
 # Expose port
 EXPOSE 8001
 
-# Run the application
+# Default command
 CMD ["gunicorn", "--bind", "0.0.0.0:8001", "--workers", "3", "drug_interaction.wsgi:application"] 

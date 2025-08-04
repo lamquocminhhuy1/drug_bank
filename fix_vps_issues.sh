@@ -1,66 +1,87 @@
 #!/bin/bash
 
 # Drug Interaction Tracker - VPS Issues Fix Script
-echo "🔧 Fixing VPS issues..."
+# This script fixes common permission and configuration issues
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "❌ Please run as root (use sudo)"
-    exit 1
-fi
+echo "🔧 Fixing VPS deployment issues..."
 
-# Stop containers
-echo "🛑 Stopping containers..."
-docker-compose down
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Create necessary directories
-echo "📁 Creating necessary directories..."
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Stop any running containers
+print_status "Stopping running containers..."
+docker-compose down 2>/dev/null || true
+
+# Fix permissions for database and directories
+print_status "Fixing permissions for database and directories..."
+
+# Create directories if they don't exist
 mkdir -p static staticfiles media
-
-# Set proper permissions
-echo "🔐 Setting proper permissions..."
-chmod 755 static staticfiles media
-chown -R 1000:1000 static staticfiles media
-
-# Create empty database file if it doesn't exist
-echo "💾 Creating database file..."
-touch db.sqlite3
-chmod 644 db.sqlite3
-chown 1000:1000 db.sqlite3
-
-# Create static files directory structure
-echo "📁 Creating static files structure..."
 mkdir -p static/css static/js static/images
 
-# Set permissions for static files
-chmod -R 755 static
-chown -R 1000:1000 static
+# Set proper ownership and permissions
+sudo chown -R 1000:1000 static staticfiles media 2>/dev/null || true
+sudo chmod -R 755 static staticfiles media
 
-# Rebuild and start containers
-echo "🐳 Rebuilding and starting containers..."
+# Create database file with proper permissions
+touch db.sqlite3
+sudo chown 1000:1000 db.sqlite3 2>/dev/null || true
+sudo chmod 644 db.sqlite3
+
+# Fix Docker volume permissions
+print_status "Fixing Docker volume permissions..."
+sudo chown -R 1000:1000 . 2>/dev/null || true
+
+# Clean up any existing containers and images
+print_status "Cleaning up Docker environment..."
+docker system prune -f 2>/dev/null || true
+docker volume prune -f 2>/dev/null || true
+
+# Rebuild and start the application
+print_status "Rebuilding and starting the application..."
 docker-compose up --build -d
 
-# Wait for application to be ready
-echo "⏳ Waiting for application to be ready..."
+# Wait for application to start
+print_status "Waiting for application to start..."
 sleep 30
 
 # Check if application is running
-echo "🔍 Checking application status..."
+print_status "Checking application status..."
 if curl -f http://localhost:8001/ > /dev/null 2>&1; then
-    echo "✅ Application is running successfully!"
+    print_success "Application is running successfully!"
     echo ""
     echo "🎉 Issues fixed successfully!"
     echo ""
     echo "📱 Access your application:"
-    echo "   🌐 Web Interface: http://YOUR_VPS_IP:8001/"
-    echo "   📚 API Documentation: http://YOUR_VPS_IP:8001/api/swagger/"
-    echo "   🛠️  Admin Panel: http://YOUR_VPS_IP:8001/admin/"
+    echo "   🌐 Web Interface: http://$(curl -s ifconfig.me):8001/"
+    echo "   📚 API Documentation: http://$(curl -s ifconfig.me):8001/api/swagger/"
+    echo "   🛠️  Admin Panel: http://$(curl -s ifconfig.me):8001/admin/"
     echo ""
-    echo "👤 Admin credentials:"
-    echo "   Username: admin"
-    echo "   Password: admin123456"
+    echo "👤 Admin: admin / admin123456"
 else
-    echo "❌ Application still has issues. Check the logs:"
-    echo "   docker-compose logs -f"
+    print_error "Application still has issues. Checking logs..."
+    docker-compose logs --tail=20
+    echo ""
+    print_error "Please check the logs above for more details."
     exit 1
 fi 

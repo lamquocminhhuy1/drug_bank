@@ -15,8 +15,6 @@ services:
       - ./static:/app/static
     restart: unless-stopped
     command: >
-      sh -c "mkdir -p /app/static &&
-              chown -R appuser:appuser /app &&
-              python manage.py migrate &&
+      sh -c "python manage.py migrate &&
               python manage.py load_sample_data &&
               gunicorn --bind 0.0.0.0:8001 --workers 3 drug_interaction.wsgi:application" 
