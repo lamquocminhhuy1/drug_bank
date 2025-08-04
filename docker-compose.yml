@@ -14,8 +14,11 @@ services:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
       - ./db.sqlite3:/app/db.sqlite3
+      - ./static:/app/static
     restart: unless-stopped
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "mkdir -p /app/static &&
+              chown -R appuser:appuser /app &&
+              python manage.py migrate &&
               python manage.py load_sample_data &&
               gunicorn --bind 0.0.0.0:8001 --workers 3 drug_interaction.wsgi:application" 

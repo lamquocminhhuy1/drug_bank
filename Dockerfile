@@ -23,15 +23,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Create static files directory
-RUN mkdir -p /app/staticfiles
+# Create necessary directories
+RUN mkdir -p /app/staticfiles /app/static /app/media
+
+# Create a non-root user
+RUN adduser --disabled-password --gecos '' appuser
+
+# Set proper permissions
+RUN chown -R appuser:appuser /app
 
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
-# Create a non-root user
-RUN adduser --disabled-password --gecos '' appuser
-RUN chown -R appuser:appuser /app
+# Switch to non-root user
 USER appuser
 
 # Expose port
